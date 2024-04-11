@@ -418,7 +418,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jar
-          path: ./server/jar
+          path: ./server
 
           # run-id: 3
           # number: 3
@@ -432,7 +432,7 @@ jobs:
           echo $PWD
           mkdir tests/dll/artifacts
           cd tests/dll/artifacts
-          native-image -jar ../../../server/jar --shared -o libcobol_ls_server
+          native-image -jar ../../../server/server.jar --shared -o libcobol_ls_server
 
       - name: Upload shared library
         uses: actions/upload-artifact@v4
