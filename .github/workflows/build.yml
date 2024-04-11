@@ -33,50 +33,50 @@ on:
       - master
 
 jobs:
-  # zipSources:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install dependencies for COBOL LS API
-  #       working-directory: clients/cobol-dialect-api
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for COBOL LS
-  #       working-directory: clients/cobol-lsp-vscode-extension
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for IDMS dialect
-  #       working-directory: clients/idms-dialect-support
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for DaCo dialect
-  #       working-directory: clients/daco-dialect-support
-  #       run: NODE_ENV=production npm ci
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: clients-for-bd-scan
-  #         path: clients/**
-  #         if-no-files-found: error
+  zipSources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies for COBOL LS API
+        working-directory: clients/cobol-dialect-api
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for COBOL LS
+        working-directory: clients/cobol-lsp-vscode-extension
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for IDMS dialect
+        working-directory: clients/idms-dialect-support
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for DaCo dialect
+        working-directory: clients/daco-dialect-support
+        run: NODE_ENV=production npm ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clients-for-bd-scan
+          path: clients/**
+          if-no-files-found: error
 
-  # generateNativeConfig:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: graalvm/setup-graalvm@v1
-  #       with:
-  #         version: '22.3.0'
-  #         java-version: '11'
-  #         components: 'native-image'
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         ## uncomment me if you need native image job reports
-  #         # native-image-job-reports: 'true'
-  #         cache: 'maven'
-  #     - name: Generate assisted configuration for GraalVM native build
-  #       working-directory: server
-  #       run: mvn -e -B -Pnative -Dagent=true -Dtest=\!PositiveTest* -DfailIfNoTests=false test
-  #     - name: Upload native build configuration
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         if-no-files-found: warn
-  #         name: native-build-configuration
-  #         path: server/engine/target/native/agent-output/test/*
+  generateNativeConfig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.0'
+          java-version: '11'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ## uncomment me if you need native image job reports
+          # native-image-job-reports: 'true'
+          cache: 'maven'
+      - name: Generate assisted configuration for GraalVM native build
+        working-directory: server
+        run: mvn -e -B -Pnative -Dagent=true -Dtest=\!PositiveTest* -DfailIfNoTests=false test
+      - name: Upload native build configuration
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: native-build-configuration
+          path: server/engine/target/native/agent-output/test/*
 
   buildPlatformIndependedPart:
     runs-on: ubuntu-latest
@@ -391,7 +391,7 @@ jobs:
             arch: x64
             container: alpine:3.17
     runs-on: ${{ matrix.os }}
-    # needs: [packageNative]
+    needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
       - shell: pwsh
@@ -419,7 +419,9 @@ jobs:
         with:
           name: jar
           path: ./server/jar
-          run-id: 3
+
+          # run-id: 3
+          # number: 3
       # - name: Deploy server jar
       #   working-directory: clients/cobol-lsp-vscode-extension
       #   run: cp ../../jar/server.jar ./server/jar
