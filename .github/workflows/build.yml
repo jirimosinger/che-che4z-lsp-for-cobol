@@ -181,7 +181,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
 
-      # Setup envierment
+      # Setup environment
       - name: switch xcode to 12.5.1
         if: matrix.os == 'macos-11'
         run: |
