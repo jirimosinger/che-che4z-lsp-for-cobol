@@ -427,9 +427,11 @@ jobs:
       #   run: cp ../../jar/server.jar ./server/jar
 
       - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
-        working-directory: tests/dll/artifacts
+        # working-directory: tests/dll/artifacts
         run: |
           echo $PWD
+          mkdir tests/dll/artifacts
+          cd tests/dll/artifacts
           native-image -jar ../../../server/jar --shared -o libcobol_ls_server
 
       - name: Upload shared library
