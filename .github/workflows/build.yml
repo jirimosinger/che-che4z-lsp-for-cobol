@@ -379,3 +379,88 @@ jobs:
         run: |
           npm ci
           npm run test
+
+  createSharedLibrary:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-11, ubuntu-latest]
+        arch: [x64, arm64]
+        include:
+          - os: ubuntu-latest
+            arch: x64
+            container: alpine:3.17
+    runs-on: ${{ matrix.os }}
+    needs: [packageNative]
+    steps:
+      # Generate environment variable
+      - shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
+      - shell: sh
+        if: matrix.os == 'macos-11'
+        run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
+      - shell: sh
+        if: matrix.os == 'ubuntu-latest'
+        run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        # if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
+        with:
+          version: '22.3.0'
+          java-version: '11'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ## uncomment me if you need native image job reports
+          # native-image-job-reports: 'true'
+          # cache: 'maven'
+      - name: Retrieve server jars
+        uses: actions/download-artifact@v3
+        with:
+          name: jar
+          path: ./server/jar
+      # - name: Deploy server jar
+      #   working-directory: clients/cobol-lsp-vscode-extension
+      #   run: cp ../../jar/server.jar ./server/jar
+
+      - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
+        working-directory: tests/dll/artifacts
+        run: native-image -jar ../../../server/jar --shared -o libcobol_ls_server
+
+      - name: Upload shared library
+        uses: actions/upload-artifact@v3
+        with:
+          name: shared-lib-${{ matrix.os }}-${{ matrix.arch }}
+          path: tests/dll/artifacts/**
+          if-no-files-found: error
+
+      # - name: Deploy windows executable
+      #   working-directory: clients/cobol-lsp-vscode-extension
+      #   if: startsWith( matrix.os, 'windows')
+      #   run: |
+      #     cp ../../staging/${{ env.target }}/engine.build_artifacts.txt ./server/native
+      #     cp ../../staging/${{ env.target }}/engine.exe ./server/native
+      #     cp ../../staging/${{ env.target }}/sunmscapi.dll ./server/native
+      #     cp ./server/native/* ../../tests/native-executable-tests/server/windows/
+      # - name: Deploy macos executable
+      #   working-directory: clients/cobol-lsp-vscode-extension
+      #   if: startsWith( matrix.os, 'mac')
+      #   run: |
+      #     cp -p ../../staging/${{ env.target }}/engine ./server/native/server-mac
+      #     chmod +x ./server/native/server-mac
+      #     cp ./server/native/server-mac ../../tests/native-executable-tests/server/mac/
+      # - name: Deploy linux executable
+      #   working-directory: clients/cobol-lsp-vscode-extension
+      #   if: startsWith( matrix.os, 'ubuntu')
+      #   run: |
+      #     cp -p ../../staging/${{ env.target }}/engine ./server/native/server-linux
+      #     chmod +x ./server/native/server-linux
+      #     cp ./server/native/server-linux ../../tests/native-executable-tests/server/linux/
+      # - uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 16
+      # - uses: actions/upload-artifact@v3
+      #   with:
+      #     if-no-files-found: warn
+      #     name: vsix-cobol-language-support-${{ env.target }}
+      #     path: 'cobol-language-support*.vsix'
