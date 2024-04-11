@@ -33,129 +33,129 @@ on:
       - master
 
 jobs:
-  # zipSources:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install dependencies for COBOL LS API
-  #       working-directory: clients/cobol-dialect-api
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for COBOL LS
-  #       working-directory: clients/cobol-lsp-vscode-extension
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for IDMS dialect
-  #       working-directory: clients/idms-dialect-support
-  #       run: NODE_ENV=production npm ci
-  #     - name: Install dependencies for DaCo dialect
-  #       working-directory: clients/daco-dialect-support
-  #       run: NODE_ENV=production npm ci
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: clients-for-bd-scan
-  #         path: clients/**
-  #         if-no-files-found: error
+  zipSources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies for COBOL LS API
+        working-directory: clients/cobol-dialect-api
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for COBOL LS
+        working-directory: clients/cobol-lsp-vscode-extension
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for IDMS dialect
+        working-directory: clients/idms-dialect-support
+        run: NODE_ENV=production npm ci
+      - name: Install dependencies for DaCo dialect
+        working-directory: clients/daco-dialect-support
+        run: NODE_ENV=production npm ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clients-for-bd-scan
+          path: clients/**
+          if-no-files-found: error
 
-  # generateNativeConfig:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: graalvm/setup-graalvm@v1
-  #       with:
-  #         version: '22.3.0'
-  #         java-version: '11'
-  #         components: 'native-image'
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         ## uncomment me if you need native image job reports
-  #         # native-image-job-reports: 'true'
-  #         cache: 'maven'
-  #     - name: Generate assisted configuration for GraalVM native build
-  #       working-directory: server
-  #       run: mvn -e -B -Pnative -Dagent=true -Dtest=\!PositiveTest* -DfailIfNoTests=false test
-  #     - name: Upload native build configuration
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         if-no-files-found: warn
-  #         name: native-build-configuration
-  #         path: server/engine/target/native/agent-output/test/*
+  generateNativeConfig:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.0'
+          java-version: '11'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ## uncomment me if you need native image job reports
+          # native-image-job-reports: 'true'
+          cache: 'maven'
+      - name: Generate assisted configuration for GraalVM native build
+        working-directory: server
+        run: mvn -e -B -Pnative -Dagent=true -Dtest=\!PositiveTest* -DfailIfNoTests=false test
+      - name: Upload native build configuration
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: native-build-configuration
+          path: server/engine/target/native/agent-output/test/*
 
-  # buildPlatformIndependedPart:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - uses: graalvm/setup-graalvm@v1
-  #       with:
-  #         version: '22.3.0'
-  #         java-version: '11'
-  #         components: 'native-image'
-  #         github-token: ${{ secrets.GITHUB_TOKEN }}
-  #         ## uncomment me if you need native image job reports
-  #         # native-image-job-reports: 'true'
-  #         cache: 'maven'
-  #     - name: Build Server and Dialects Jars
-  #       working-directory: server
-  #       run: mvn clean package --no-transfer-progress
-  #     - name: Upload performance data
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         if-no-files-found: warn
-  #         name: test-perfomance-data
-  #         path: server/engine/target/perf.csv
-  #     - name: Upload jar files
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: jar
-  #         path: server/engine/target/server.jar
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 16
-  #     - name: Build VS Code extension dialect API
-  #       working-directory: clients/cobol-dialect-api
-  #       run: |
-  #         npm ci
-  #         npm run compile
-  #     - name: Upload cobol dialect API library
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: lib
-  #         path: clients/cobol-dialect-api/lib/*    
-  #     - name: Unit Test COBOL LS extension
-  #       working-directory: clients/cobol-lsp-vscode-extension
-  #       run: |
-  #         npm ci
-  #         npm run test
-  #     - name: Package IDMS vsix
-  #       working-directory: clients/idms-dialect-support
-  #       run: |
-  #         npm ci
-  #         cp ../../server/dialect-idms/target/dialect-idms.jar ./server/jar
-  #         npm run package
-  #         cp *.vsix ../../.
-  #     - name: Package DaCo vsix
-  #       working-directory: clients/daco-dialect-support
-  #       run: |
-  #         npm ci
-  #         cp ../../server/dialect-daco/target/dialect-daco.jar ./server/jar
-  #         npm run package
-  #         cp *.vsix ../../.
-  #     - name: Upload IDMS vsix
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         if-no-files-found: warn
-  #         name: vsix-idms-dialect
-  #         path: 'cobol-language-support-for-idms*.vsix'
-  #     - name: Upload DaCo vsix
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         if-no-files-found: warn
-  #         name: vsix-daco-dialect
-  #         path: 'cobol-language-support-for-daco*.vsix'
-  #     - name: SonarCloud Scan
-  #       if: github.ref == 'refs/heads/development'
-  #       uses: sonarsource/sonarcloud-github-action@49e6cd3b187936a73b8280d59ffd9da69df63ec9
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  buildPlatformIndependedPart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.3.0'
+          java-version: '11'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ## uncomment me if you need native image job reports
+          # native-image-job-reports: 'true'
+          cache: 'maven'
+      - name: Build Server and Dialects Jars
+        working-directory: server
+        run: mvn clean package --no-transfer-progress
+      - name: Upload performance data
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: test-perfomance-data
+          path: server/engine/target/perf.csv
+      - name: Upload jar files
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: server/engine/target/server.jar
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Build VS Code extension dialect API
+        working-directory: clients/cobol-dialect-api
+        run: |
+          npm ci
+          npm run compile
+      - name: Upload cobol dialect API library
+        uses: actions/upload-artifact@v4
+        with:
+          name: lib
+          path: clients/cobol-dialect-api/lib/*    
+      - name: Unit Test COBOL LS extension
+        working-directory: clients/cobol-lsp-vscode-extension
+        run: |
+          npm ci
+          npm run test
+      - name: Package IDMS vsix
+        working-directory: clients/idms-dialect-support
+        run: |
+          npm ci
+          cp ../../server/dialect-idms/target/dialect-idms.jar ./server/jar
+          npm run package
+          cp *.vsix ../../.
+      - name: Package DaCo vsix
+        working-directory: clients/daco-dialect-support
+        run: |
+          npm ci
+          cp ../../server/dialect-daco/target/dialect-daco.jar ./server/jar
+          npm run package
+          cp *.vsix ../../.
+      - name: Upload IDMS vsix
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: vsix-idms-dialect
+          path: 'cobol-language-support-for-idms*.vsix'
+      - name: Upload DaCo vsix
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: vsix-daco-dialect
+          path: 'cobol-language-support-for-daco*.vsix'
+      - name: SonarCloud Scan
+        if: github.ref == 'refs/heads/development'
+        uses: sonarsource/sonarcloud-github-action@49e6cd3b187936a73b8280d59ffd9da69df63ec9
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # buildNative:
   #   strategy:
@@ -391,7 +391,7 @@ jobs:
             arch: x64
             container: alpine:3.17
     runs-on: ${{ matrix.os }}
-    # needs: [packageNative]
+    needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
       - shell: pwsh
@@ -419,7 +419,9 @@ jobs:
         with:
           name: jar
           path: ./server/jar
-          run-id: 3
+
+          # run-id: 3
+          # number: 3
       # - name: Deploy server jar
       #   working-directory: clients/cobol-lsp-vscode-extension
       #   run: cp ../../jar/server.jar ./server/jar
