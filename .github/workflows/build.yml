@@ -433,7 +433,7 @@ jobs:
           echo $PWD
           mkdir tests/dll/artifacts
           cd tests/dll/artifacts
-          native-image -jar ../../../server/server.jar --target=linux-arm64 --shared -o libcobol_ls_server
+          native-image -jar ../../../server/server.jar --target=linux-aarch64 --shared -o libcobol_ls_server
 
       - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
         # working-directory: tests/dll/artifacts
