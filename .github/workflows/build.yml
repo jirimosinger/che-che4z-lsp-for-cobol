@@ -405,7 +405,7 @@ jobs:
         run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
-        # if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
+        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
         with:
           version: '22.3.0'
           java-version: '11'
