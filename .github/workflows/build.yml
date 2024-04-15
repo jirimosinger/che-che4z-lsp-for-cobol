@@ -440,6 +440,7 @@ jobs:
         if: matrix.os != 'ubuntu-latest' || matrix.arch != 'arm64'
         run: |
           echo $PWD
+          ls -la /opt/hostedtoolcache/graalvm-ce-java11-linux/22.3.0/x64/graalvm-ce-java11-22.3.0/lib/svm/clibraries
           mkdir tests/dll/artifacts
           cd tests/dll/artifacts
           native-image -jar ../../../server/server.jar --shared -o libcobol_ls_server
