@@ -459,5 +459,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shared-lib-${{ matrix.native }}${{ matrix.artifacts-ext }}
-          path: tests/dll/artifacts/cobol-ls
+          path: tests/dll/images/cobol-ls
           if-no-files-found: error
