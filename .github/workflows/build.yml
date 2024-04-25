@@ -211,6 +211,6 @@ jobs:
       - name: Upload native image
         uses: actions/upload-artifact@v4
         with:
-          name: cobol-ls-${{ matrix.native }}${{ matrix.artifacts-ext }}
+          name: cobol-ls-${{ matrix.native }}
           path: native_image/cobol-ls${{ matrix.artifacts-ext }}
           if-no-files-found: error
