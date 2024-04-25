@@ -392,10 +392,10 @@ jobs:
           #   container: alpine:3.17
           - os: ubuntu-22.04
             native: linux_x64
-            container: alpine:3.16
+            # container: alpine:3.16
           - os: ubuntu-22.04
             native: linux_arm64
-            container: alpine:3.19
+            # container: alpine:3.19
           - os: windows-2022
             native: win32_x64
             artifacts-ext: .exe
@@ -407,7 +407,7 @@ jobs:
           - os: macos-14
             native: darwin_arm64
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
+    # container: ${{ matrix.container }}
     needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
@@ -424,6 +424,7 @@ jobs:
           version: '22.3.0'
           java-version: '11'
           components: 'native-image'
+          distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
@@ -459,5 +460,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shared-lib-${{ matrix.native }}${{ matrix.artifacts-ext }}
-          path: tests/dll/images/cobol-ls
+          path: tests/dll/images/cobol-ls${{ matrix.artifacts-ext }}
           if-no-files-found: error
