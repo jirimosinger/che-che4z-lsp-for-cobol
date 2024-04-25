@@ -384,25 +384,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-11, ubuntu-latest]
-        arch: [x64, arm64]
+        # os: [windows-latest, macos-11, ubuntu-latest]
+        # arch: [x64, arm64]
         include:
-          - os: ubuntu-latest
-            arch: x64
-            container: alpine:3.17
+          # - os: ubuntu-latest
+          #   arch: x64
+          #   container: alpine:3.17
+          - os: ubuntu-22.04
+            native: linux_x64
+            container: alpine:3.16
+          - os: ubuntu-22.04
+            native: linux_arm64
+            container: alpine:3.19
+          - os: windows-2022
+            native: win32_x64
+            artifacts-ext: .exe
+          - os: windows-2022
+            native: win32_arm64
+            artifacts-ext: .exe
+          - os: macos-13
+            native: darwin_x64
+          - os: macos-14
+            native: darwin_arm64
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
       - shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
+        if: matrix.os == 'windows-2022'
+        run: echo "target=${{ matrix.native }}" >> $env:GITHUB_ENV
       - shell: sh
-        if: matrix.os == 'macos-11'
-        run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
+        if: matrix.os != 'windows-2022'
+        run: echo "target=${{ matrix.native }}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
         # if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
@@ -440,34 +454,3 @@ jobs:
           name: shared-lib-${{ matrix.os }}-${{ matrix.arch }}
           path: tests/dll/artifacts/**
           if-no-files-found: error
-
-      # - name: Deploy windows executable
-      #   working-directory: clients/cobol-lsp-vscode-extension
-      #   if: startsWith( matrix.os, 'windows')
-      #   run: |
-      #     cp ../../staging/${{ env.target }}/engine.build_artifacts.txt ./server/native
-      #     cp ../../staging/${{ env.target }}/engine.exe ./server/native
-      #     cp ../../staging/${{ env.target }}/sunmscapi.dll ./server/native
-      #     cp ./server/native/* ../../tests/native-executable-tests/server/windows/
-      # - name: Deploy macos executable
-      #   working-directory: clients/cobol-lsp-vscode-extension
-      #   if: startsWith( matrix.os, 'mac')
-      #   run: |
-      #     cp -p ../../staging/${{ env.target }}/engine ./server/native/server-mac
-      #     chmod +x ./server/native/server-mac
-      #     cp ./server/native/server-mac ../../tests/native-executable-tests/server/mac/
-      # - name: Deploy linux executable
-      #   working-directory: clients/cobol-lsp-vscode-extension
-      #   if: startsWith( matrix.os, 'ubuntu')
-      #   run: |
-      #     cp -p ../../staging/${{ env.target }}/engine ./server/native/server-linux
-      #     chmod +x ./server/native/server-linux
-      #     cp ./server/native/server-linux ../../tests/native-executable-tests/server/linux/
-      # - uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 16
-      # - uses: actions/upload-artifact@v4
-      #   with:
-      #     if-no-files-found: warn
-      #     name: vsix-cobol-language-support-${{ env.target }}
-      #     path: 'cobol-language-support*.vsix'
