@@ -440,17 +440,24 @@ jobs:
       #   working-directory: clients/cobol-lsp-vscode-extension
       #   run: cp ../../jar/server.jar ./server/jar
 
-      - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
-        # working-directory: tests/dll/artifacts
+      - name: Create native image for ${{ matrix.native }}
         run: |
           echo $PWD
-          mkdir tests/dll/artifacts
-          cd tests/dll/artifacts
-          native-image -jar ../../../server/server.jar --shared -o libcobol_ls_server
+          mkdir tests/dll/images
+          cd tests/dll/images
+          native-image -jar ../../../server/server.jar cobol-ls
+
+      # - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
+      #   # working-directory: tests/dll/artifacts
+      #   run: |
+      #     echo $PWD
+      #     mkdir tests/dll/artifacts
+      #     cd tests/dll/artifacts
+      #     native-image -jar ../../../server/server.jar --shared -o libcobol_ls_server
 
       - name: Upload shared library
         uses: actions/upload-artifact@v4
         with:
-          name: shared-lib-${{ matrix.os }}-${{ matrix.arch }}
-          path: tests/dll/artifacts/**
+          name: shared-lib-${{ matrix.native }}${{ matrix.artifacts-ext }}
+          path: tests/dll/artifacts/cobol-ls
           if-no-files-found: error
