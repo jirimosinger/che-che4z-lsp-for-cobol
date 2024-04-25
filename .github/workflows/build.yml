@@ -158,22 +158,15 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   
 
-  createSharedLibrary:
+  createNativeImage:
     strategy:
       fail-fast: false
       matrix:
-        # os: [windows-latest, macos-11, ubuntu-latest]
-        # arch: [x64, arm64]
         include:
-          # - os: ubuntu-latest
-          #   arch: x64
-          #   container: alpine:3.17
           - os: ubuntu-22.04
             native: linux_x64
-            # container: alpine:3.16
           - os: ubuntu-22.04
             native: linux_arm64
-            # container: alpine:3.19
           - os: windows-2022
             native: win32_x64
             artifacts-ext: .exe
@@ -185,7 +178,6 @@ jobs:
           - os: macos-14
             native: darwin_arm64
     runs-on: ${{ matrix.os }}
-    # container: ${{ matrix.container }}
     needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
@@ -197,7 +189,6 @@ jobs:
         run: echo "target=${{ matrix.native }}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
-        # if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
         with:
           version: '22.3.0'
           java-version: '11'
@@ -211,31 +202,15 @@ jobs:
         with:
           name: jar
           path: ./server
-
-          # run-id: 3
-          # number: 3
-      # - name: Deploy server jar
-      #   working-directory: clients/cobol-lsp-vscode-extension
-      #   run: cp ../../jar/server.jar ./server/jar
-
       - name: Create native image for ${{ matrix.native }}
         run: |
           echo $PWD
-          mkdir tests/dll/images
-          cd tests/dll/images
-          native-image -jar ../../../server/server.jar cobol-ls
-
-      # - name: Create shared library for ${{ matrix.os }}-${{ matrix.arch }}
-      #   # working-directory: tests/dll/artifacts
-      #   run: |
-      #     echo $PWD
-      #     mkdir tests/dll/artifacts
-      #     cd tests/dll/artifacts
-      #     native-image -jar ../../../server/server.jar --shared -o libcobol_ls_server
-
-      - name: Upload shared library
+          mkdir native_image
+          cd native_image
+          native-image -jar ../server/server.jar cobol-ls
+      - name: Upload native image
         uses: actions/upload-artifact@v4
         with:
-          name: shared-lib-${{ matrix.native }}${{ matrix.artifacts-ext }}
-          path: tests/dll/images/cobol-ls${{ matrix.artifacts-ext }}
+          name: cobol-ls-${{ matrix.native }}${{ matrix.artifacts-ext }}
+          path: native_image/cobol-ls${{ matrix.artifacts-ext }}
           if-no-files-found: error
