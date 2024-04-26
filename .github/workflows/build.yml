@@ -197,6 +197,16 @@ jobs:
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
           cache: 'maven'
+      - name: Retrieve native build configurations
+        uses: actions/download-artifact@v3
+        with:
+          name: native-build-configuration
+          path: native-build-configuration
+      - name: Add graalVM configuration to server
+        run: |
+          cp -rp native-build-configuration/session-* server/engine/src/main/resources/META-INF/native-image/
+          rm server/engine/src/main/resources/META-INF/native-image/session-*/jni-config.json
+        shell: bash
       - name: Build with Maven
         working-directory: server
         run: mvn -e -B -Pnative -DskipTests clean package
