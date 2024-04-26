@@ -265,7 +265,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cobol-ls-${{ env.target }}
-          path: server/engine/target/engine
+          path: server/engine/target/cobol-ls
           if-no-files-found: error
 
   # packageNative:
