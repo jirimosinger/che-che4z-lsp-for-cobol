@@ -198,7 +198,7 @@ jobs:
           # native-image-job-reports: 'true'
           cache: 'maven'
       - name: Retrieve native build configurations
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: native-build-configuration
           path: native-build-configuration
