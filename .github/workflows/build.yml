@@ -196,7 +196,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
-          # cache: 'maven'
+          cache: 'maven'
+      - name: Build with Maven
+        working-directory: server
+        run: mvn -e -B -Pnative -DskipTests clean package
       - name: Retrieve server jars
         uses: actions/download-artifact@v4
         with:
