@@ -161,97 +161,125 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-11, ubuntu-latest]
-        arch: [x64, arm64]
         include:
-          - os: ubuntu-latest
-            arch: x64
-            container: alpine:3.17
+          - os: ubuntu-22.04
+            native: linux_x64
+            # container: alpine:3.19
+            # dbg-strip: objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && objcopy --strip-unneeded hlasm_language_server && objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
+            # dbg-pattern: build/bin/hlasm_language_server.dbg
+          - os: ubuntu-22.04
+            native: linux_arm64
+            # container: alpine:3.19
+            # dbg-strip: aarch64-linux-musl-objcopy --only-keep-debug hlasm_language_server hlasm_language_server.dbg && aarch64-linux-musl-objcopy --strip-unneeded hlasm_language_server && aarch64-linux-musl-objcopy --add-gnu-debuglink=hlasm_language_server.dbg hlasm_language_server
+            # dbg-pattern: build/bin/hlasm_language_server.dbg
+          - os: windows-2022
+            native: win32_x64
+            artifacts-ext: .exe
+          - os: windows-2022
+            native: win32_arm64
+            artifacts-ext: .exe
+            skip-test: true
+          - os: macos-13
+            native: darwin_x64
+          - os: macos-14
+            native: darwin_arm64
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig]
     steps:
-      # Generate environment variable
-      - shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'macos-11'
-        run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
+      # # Generate environment variable
+      # - shell: pwsh
+      #   if: matrix.os == 'windows-latest'
+      #   run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
+      # - shell: sh
+      #   if: matrix.os == 'macos-11'
+      #   run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
+      # - shell: sh
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
 
       # Setup envierment
-      - name: switch xcode to 12.5.1
-        if: matrix.os == 'macos-11'
-        run: |
-          sudo xcode-select -s /Applications/Xcode_12.5.1.app/Contents/Developer
-          xcodebuild -version
-      - uses: al-cheb/configure-pagefile-action@v1.2
-        if: matrix.os == 'windows-latest'
-        with:
-          minimum-size: 16GB
-          maximum-size: 16GB
-          disk-root: "C:"
+      # - name: switch xcode to 12.5.1
+      #   if: matrix.os == 'macos-11'
+      #   run: |
+      #     sudo xcode-select -s /Applications/Xcode_12.5.1.app/Contents/Developer
+      #     xcodebuild -version
+      # - uses: al-cheb/configure-pagefile-action@v1.2
+      #   if: matrix.os == 'windows-latest'
+      #   with:
+      #     minimum-size: 16GB
+      #     maximum-size: 16GB
+      #     disk-root: "C:"
       - uses: actions/checkout@v3
+      # - uses: graalvm/setup-graalvm@v1
+      #   if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+      #   with:
+      #     version: '22.3.0'
+      #     java-version: '11'
+      #     components: 'native-image'
+      #     native-image-musl: 'true'
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     ## uncomment me if you need native image job reports
+      #     # native-image-job-reports: 'true'
+      #     cache: 'maven'
+      # - uses: graalvm/setup-graalvm@v1
+      #   if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
+      #   with:
+      #     version: '22.3.0'
+      #     java-version: '11'
+      #     components: 'native-image'
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     ## uncomment me if you need native image job reports
+      #     # native-image-job-reports: 'true'
+      #     cache: 'maven'
       - uses: graalvm/setup-graalvm@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         with:
           version: '22.3.0'
           java-version: '11'
           components: 'native-image'
-          native-image-musl: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
           cache: 'maven'
-      - uses: graalvm/setup-graalvm@v1
-        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
-        with:
-          version: '22.3.0'
-          java-version: '11'
-          components: 'native-image'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ## uncomment me if you need native image job reports
-          # native-image-job-reports: 'true'
-          cache: 'maven'
-      - uses: ilammy/msvc-dev-cmd@v1
-        if: matrix.os == 'windows-latest'
+      # - uses: ilammy/msvc-dev-cmd@v1
+      #   if: matrix.os == 'windows-latest'
       - name: Retrieve native build configurations
         uses: actions/download-artifact@v4
         with:
           name: native-build-configuration
           path: native-build-configuration
-      - name: Verify musl setup
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-        run: ./.github/scripts/verify_musl_setup.sh
-        shell: bash {0}
+      # - name: Verify musl setup
+      #   if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+      #   run: ./.github/scripts/verify_musl_setup.sh
+      #   shell: bash {0}
       - name: Add graalVM configuration to server
         run: |
           cp -rp native-build-configuration/session-* server/engine/src/main/resources/META-INF/native-image/
           rm server/engine/src/main/resources/META-INF/native-image/session-*/jni-config.json
         shell: bash
+      # - name: Build with Maven
+      #   working-directory: server
+      #   if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
+      #   run: mvn -e -B -Pnative -DskipTests clean package
+      # - name: Build with Maven for Linux
+      #   if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+      #   working-directory: server
+      #   run: mvn -e -B -Plinux-native -DskipTests clean package
       - name: Build with Maven
         working-directory: server
-        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
         run: mvn -e -B -Pnative -DskipTests clean package
-      - name: Build with Maven for Linux
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-        working-directory: server
-        run: mvn -e -B -Plinux-native -DskipTests clean package
       - name: Rename to cobol-ls
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         shell: bash
         run: | 
           mv server/engine/target/engine.build_artifacts.txt server/engine/target/cobol-ls.build_artifacts.txt
           mv server/engine/target/engine.exe server/engine/target/cobol-ls.exe
       - name: Rename to cobol-ls
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         shell: bash
         run: | 
           mv server/engine/target/engine ./server/engine/target/cobol-ls
       - name: Prepare windows artifacts
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         uses: actions/upload-artifact@v4
         with:
           name: cobol-ls-${{ env.target }}
@@ -261,7 +289,7 @@ jobs:
             server/engine/target/*.txt
           if-no-files-found: error
       - name: Prepare non-windows artifacts
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         uses: actions/upload-artifact@v4
         with:
           name: cobol-ls-${{ env.target }}
