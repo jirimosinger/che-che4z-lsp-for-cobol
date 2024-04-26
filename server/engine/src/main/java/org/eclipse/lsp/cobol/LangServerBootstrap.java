@@ -42,6 +42,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import org.graalvm.nativeimage.IsolateThread;
+import org.graalvm.nativeimage.c.function.CEntryPoint;
+import org.graalvm.nativeimage.c.type.CCharPointerPointer;
+import org.graalvm.nativeimage.c.type.CTypeConversion;
+
 /**
  * This class is an entry point for the application. It initializes the DI context and runs the
  * server to accept the connections using either socket on LSP_PORT or pipes using STDIO. After the
@@ -75,6 +80,19 @@ public class LangServerBootstrap {
     ClientProvider provider = injector.getInstance(ClientProvider.class);
 
     langServerBootstrap.start(args, server, provider);
+  }
+
+  @CEntryPoint(name = "nativeImageMain")
+  static int nativeImageMain(IsolateThread thread, int argc, CCharPointerPointer cArgs)
+      throws ExecutionException, InterruptedException, IOException {
+    String[] args = new String[argc];
+
+    for (int i = 0; i < argc; ++i) {
+      args[i] = CTypeConversion.toJavaString(cArgs.read(i));
+    }
+
+    cliMode = true;
+    return new CommandLine(new Cli()).execute(args);
   }
 
   private static boolean isCliMode(String[] args) {

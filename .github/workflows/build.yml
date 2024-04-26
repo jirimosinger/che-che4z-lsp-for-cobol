@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies for DaCo dialect
         working-directory: clients/daco-dialect-support
         run: NODE_ENV=production npm ci
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: clients-for-bd-scan
           path: clients/**
@@ -72,7 +72,7 @@ jobs:
         working-directory: server
         run: mvn -e -B -Pnative -Dagent=true -Dtest=\!PositiveTest* -DfailIfNoTests=false test
       - name: Upload native build configuration
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: warn
           name: native-build-configuration
@@ -97,13 +97,13 @@ jobs:
         working-directory: server
         run: mvn clean verify --no-transfer-progress
       - name: Upload performance data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: warn
           name: test-perfomance-data
           path: server/engine/target/perf.csv
       - name: Upload jar files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jar
           path: server/engine/target/server.jar
@@ -116,7 +116,7 @@ jobs:
           npm ci
           npm run compile
       - name: Upload cobol dialect API library
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lib
           path: clients/cobol-dialect-api/lib/*    
@@ -140,13 +140,13 @@ jobs:
           npm run package
           cp *.vsix ../../.
       - name: Upload IDMS vsix
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: warn
           name: vsix-idms-dialect
           path: 'cobol-language-support-for-idms*.vsix'
       - name: Upload DaCo vsix
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: warn
           name: vsix-daco-dialect
@@ -156,57 +156,39 @@ jobs:
         uses: sonarsource/sonarcloud-github-action@49e6cd3b187936a73b8280d59ffd9da69df63ec9
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
 
-  buildNative:
+  createNativeImage:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-11, ubuntu-latest]
-        arch: [x64, arm64]
         include:
-          - os: ubuntu-latest
-            arch: x64
-            container: alpine:3.17
+          - os: ubuntu-22.04
+            native: linux_x64
+          - os: ubuntu-22.04
+            native: linux_arm64
+          - os: windows-2022
+            native: win32_x64
+            artifacts-ext: .exe
+          - os: windows-2022
+            native: win32_arm64
+            artifacts-ext: .exe
+          - os: macos-13
+            native: darwin_x64
+          - os: macos-14
+            native: darwin_arm64
     runs-on: ${{ matrix.os }}
-    needs: [generateNativeConfig]
+    needs: [buildPlatformIndependedPart]
     steps:
       # Generate environment variable
       - shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
+        if: matrix.os == 'windows-2022'
+        run: echo "target=${{ matrix.native }}" >> $env:GITHUB_ENV
       - shell: sh
-        if: matrix.os == 'macos-11'
-        run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
-
-      # Setup envierment
-      - name: switch xcode to 12.5.1
-        if: matrix.os == 'macos-11'
-        run: |
-          sudo xcode-select -s /Applications/Xcode_12.5.1.app/Contents/Developer
-          xcodebuild -version
-      - uses: al-cheb/configure-pagefile-action@v1.2
-        if: matrix.os == 'windows-latest'
-        with:
-          minimum-size: 16GB
-          maximum-size: 16GB
-          disk-root: "C:"
-      - uses: actions/checkout@v3
+        if: matrix.os != 'windows-2022'
+        run: echo "target=${{ matrix.native }}" >> $GITHUB_ENV
+      - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-        with:
-          version: '22.3.0'
-          java-version: '11'
-          components: 'native-image'
-          native-image-musl: 'true'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ## uncomment me if you need native image job reports
-          # native-image-job-reports: 'true'
-          cache: 'maven'
-      - uses: graalvm/setup-graalvm@v1
-        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
         with:
           version: '22.3.0'
           java-version: '11'
@@ -215,17 +197,11 @@ jobs:
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
           cache: 'maven'
-      - uses: ilammy/msvc-dev-cmd@v1
-        if: matrix.os == 'windows-latest'
       - name: Retrieve native build configurations
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: native-build-configuration
           path: native-build-configuration
-      - name: Verify musl setup
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-        run: ./.github/scripts/verify_musl_setup.sh
-        shell: bash {0}
       - name: Add graalVM configuration to server
         run: |
           cp -rp native-build-configuration/session-* server/engine/src/main/resources/META-INF/native-image/
@@ -233,149 +209,21 @@ jobs:
         shell: bash
       - name: Build with Maven
         working-directory: server
-        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'x64'
         run: mvn -e -B -Pnative -DskipTests clean package
-      - name: Build with Maven for Linux
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-        working-directory: server
-        run: mvn -e -B -Plinux-native -DskipTests clean package
-      - name: Prepare windows artifacts
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: staging-${{ env.target }}
-          path: |
-            server/engine/target/*.exe
-            server/engine/target/*.dll
-            server/engine/target/*.txt
-          if-no-files-found: error
-      - name: Prepare non-windows artifacts
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: staging-${{ env.target }}
-          path: server/engine/target/engine
-          if-no-files-found: error
-
-  packageNative:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-11, ubuntu-latest]
-        arch: [x64, arm64]
-        include:
-          - os: ubuntu-latest
-            arch: x64
-            container: alpine:3.17
-    runs-on: ${{ matrix.os }}
-    needs: [buildNative,buildPlatformIndependedPart]
-    steps:
-      # Generate environment variable
-      - shell: pwsh
-        if: matrix.os == 'windows-latest'
-        run: echo "target=win32-${{ matrix.arch }}" >> $env:GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'macos-11'
-        run: echo "target=darwin-${{ matrix.arch }}" >> $GITHUB_ENV
-      - shell: sh
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "target=linux-${{ matrix.arch }}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
-      - name: Retrieve native build
-        uses: actions/download-artifact@v3
-        with:
-          name: staging-${{ env.target }}
-          path: staging/${{ env.target }}
       - name: Retrieve server jars
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jar
-          path: jar
-      - name: Deploy server jar
-        working-directory: clients/cobol-lsp-vscode-extension
-        run: cp ../../jar/server.jar ./server/jar
-      - name: Setup telemetry key
-        working-directory: clients/cobol-lsp-vscode-extension
-        if: github.event.inputs.with_telemetry == 'true'
-        run: echo ${{ secrets.TELEMETRY_INSTRUMENTATION_KEY }} > resources/TELEMETRY_KEY
-      - name: Deploy windows executable
-        working-directory: clients/cobol-lsp-vscode-extension
-        if: startsWith( matrix.os, 'windows')
+          path: ./server
+      - name: Create native image for ${{ matrix.native }}
         run: |
-          cp ../../staging/${{ env.target }}/engine.build_artifacts.txt ./server/native
-          cp ../../staging/${{ env.target }}/engine.exe ./server/native
-          cp ../../staging/${{ env.target }}/sunmscapi.dll ./server/native
-          cp ./server/native/* ../../tests/native-executable-tests/server/windows/
-      - name: Deploy macos executable
-        working-directory: clients/cobol-lsp-vscode-extension
-        if: startsWith( matrix.os, 'mac')
-        run: |
-          cp -p ../../staging/${{ env.target }}/engine ./server/native/server-mac
-          chmod +x ./server/native/server-mac
-          cp ./server/native/server-mac ../../tests/native-executable-tests/server/mac/
-      - name: Deploy linux executable
-        working-directory: clients/cobol-lsp-vscode-extension
-        if: startsWith( matrix.os, 'ubuntu')
-        run: |
-          cp -p ../../staging/${{ env.target }}/engine ./server/native/server-linux
-          chmod +x ./server/native/server-linux
-          cp ./server/native/server-linux ../../tests/native-executable-tests/server/linux/
-      - uses: actions/setup-node@v3
+          echo $PWD
+          mkdir native_image
+          cd native_image
+          native-image -jar ../server/server.jar cobol-ls
+      - name: Upload native image
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 16
-      - name: Download VS Code extension dialect API
-        uses: actions/download-artifact@v3
-        with:
-          name: lib
-          path: clients/cobol-dialect-api
-      - name: update version for PR
-        working-directory: clients/cobol-lsp-vscode-extension
-        if: github.event_name == 'pull_request'
-        run: |
-          node -e "const fs=require('fs');const fileName='./package.json';var content=require(fileName);content.version=content.version+'\+pr-'+${{ github.event.pull_request.number }};fs.writeFileSync(fileName,JSON.stringify(content,null,2));"
-      - name: Build COBOL LS extension 
-        run: npm ci
-        working-directory: clients/cobol-lsp-vscode-extension
-      - name: Package COBOL LS vsix for ${{ env.target }}
-        working-directory: clients/cobol-lsp-vscode-extension
-        run: |
-          npm run package  -- --target ${{ env.target }}
-          cp *.vsix ../../.
-      - uses: actions/upload-artifact@v3
-        with:
-          if-no-files-found: warn
-          name: vsix-cobol-language-support-${{ env.target }}
-          path: 'cobol-language-support*.vsix'
-      - name: Retrieve idms dialect
-        uses: actions/download-artifact@v3
-        with:
-          name: vsix-idms-dialect
-          path: dialects-idms
-      - name: Restore idms jar and dist folder
-        run: |
-          unzip -j dialects-idms/*.vsix extension/dist/extension.js extension/dist/extension.js.map -d clients/idms-dialect-support/dist/
-          unzip -j dialects-idms/*.vsix extension/server/jar/dialect-idms.jar -d clients/idms-dialect-support/server/jar
-        shell: bash
-      - name: Retrieve daco dialect
-        uses: actions/download-artifact@v3
-        with:
-          name: vsix-daco-dialect
-          path: dialects-daco
-      - name: Restore daco jar and dist folder
-        run: |
-          unzip -j dialects-daco/*.vsix extension/dist/extension.js extension/dist/extension.js.map -d clients/daco-dialect-support/dist/
-          unzip -j dialects-daco/*.vsix extension/server/jar/dialect-daco.jar -d clients/daco-dialect-support/server/jar
-        shell: bash
-      - name: Run integration tests
-        if: github.event.inputs.skip_ui_tests != 'true'
-        uses: coactions/setup-xvfb@v1
-        with:
-          run: |
-            npm run compile
-            npm run test:integration
-          working-directory: clients/cobol-lsp-vscode-extension          
-      - name: Run native executable test code
-        working-directory: tests/native-executable-tests
-        run: |
-          npm ci
-          npm run test
+          name: cobol-ls-${{ matrix.native }}
+          path: native_image/cobol-ls${{ matrix.artifacts-ext }}
+          if-no-files-found: error
