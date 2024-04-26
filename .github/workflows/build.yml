@@ -239,11 +239,22 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         working-directory: server
         run: mvn -e -B -Plinux-native -DskipTests clean package
+      - name: Rename to cobol-ls
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: | 
+          mv server/engine/target/engine.build_artifacts.txt ./server/engine/target/cobol-ls.build_artifacts.txt
+          mv server/engine/target/engine.exe ./server/engine/target/cobol-ls.exe
+      - name: Rename to cobol-ls
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: | 
+          mv server/engine/target/engine ./server/engine/target/cobol-ls
       - name: Prepare windows artifacts
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: staging-${{ env.target }}
+          name: cobol-ls-${{ env.target }}
           path: |
             server/engine/target/*.exe
             server/engine/target/*.dll
@@ -253,7 +264,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: staging-${{ env.target }}
+          name: cobol-ls-${{ env.target }}
           path: server/engine/target/engine
           if-no-files-found: error
 
