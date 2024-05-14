@@ -56,6 +56,24 @@ jobs:
           name: native-build-configuration
           path: server/engine/target/native/agent-output/test/*
 
+  aarch64-linux-musl:
+    name: Build Linux ARM64 toolchain
+    runs-on: ubuntu-22.04
+    container: alpine:3.19
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install TAR
+        run: apk add tar
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: toolchain.tar.gz
+          key: ${{ hashFiles('scripts/toolchain.linux_arm64.sh') }}
+          lookup-only: true
+      - name: Build image
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: ./scripts/toolchain.linux_arm64.sh
+
   buildNative:
     strategy:
       fail-fast: false
@@ -64,9 +82,10 @@ jobs:
           - os: ubuntu-22.04
             native: linux-x64
             maven_profile_prefix: linux-
+            native-image-musl: 'true'
           - os: ubuntu-22.04
             native: linux-arm64
-            maven_profile_prefix: linux-
+            maven_profile_prefix: linux-arm64-
           - os: windows-2022
             native: win32-x64
             artifacts-ext: .exe
@@ -79,26 +98,30 @@ jobs:
           - os: macos-14
             native: darwin-arm64
     runs-on: ${{ matrix.os }}
-    needs: [generateNativeConfig]
+    needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
+      - name: Requirements install
+        run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
+      - name: Download toolchain
+        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        uses: actions/cache/restore@v4
+        with:
+          path: toolchain.tar.gz
+          key: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) }}
+          fail-on-cache-miss: true
+      - name: Extract toolchain
+        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        run: |
+          tar xzf toolchain.tar.gz
+          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
+
       - uses: actions/checkout@v3
       - uses: graalvm/setup-graalvm@v1
-        if: matrix.native == 'linux-x64' || matrix.native == 'linux-arm64'
         with:
           version: '22.3.0'
           java-version: '11'
           components: 'native-image'
-          native-image-musl: 'true'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          ## uncomment me if you need native image job reports
-          # native-image-job-reports: 'true'
-          cache: 'maven'
-      - uses: graalvm/setup-graalvm@v1
-        if: matrix.native != 'linux-x64' && matrix.native != 'linux-arm64'
-        with:
-          version: '22.3.0'
-          java-version: '11'
-          components: 'native-image'
+          native-image-musl: ${{ matrix.native-image-musl }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ## uncomment me if you need native image job reports
           # native-image-job-reports: 'true'
