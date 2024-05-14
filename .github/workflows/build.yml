@@ -63,8 +63,10 @@ jobs:
         include:
           - os: ubuntu-22.04
             native: linux-x64
+            maven_profile_prefix: linux-
           - os: ubuntu-22.04
             native: linux-arm64
+            maven_profile_prefix: linux-
           - os: windows-2022
             native: win32-x64
             artifacts-ext: .exe
@@ -117,7 +119,7 @@ jobs:
         shell: bash
       - name: Build with Maven
         working-directory: server
-        run: mvn -e -B -Pnative -DskipTests clean package
+        run: mvn -e -B -P${{ matrix.native }}native -DskipTests clean package
       - name: Rename to cobol-ls
         if: matrix.os == 'windows-2022'
         shell: bash
