@@ -68,11 +68,11 @@ jobs:
         id: cache
         with:
           path: toolchain.tar.gz
-          key: ${{ hashFiles('scripts/toolchain.linux-arm64.sh') }}
+          key: ${{ hashFiles('.github/scripts/toolchain.linux-arm64.sh') }}
           lookup-only: true
       - name: Build image
         if: steps.cache.outputs.cache-hit != 'true'
-        run: ./scripts/toolchain.linux-arm64.sh
+        run: ./.github/scripts/toolchain.linux-arm64.sh
 
   buildNative:
     strategy:
@@ -101,16 +101,16 @@ jobs:
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
       - name: Requirements install
-        run: if [ -f ./scripts/prereq.${{ matrix.native }}.sh ]; then ./scripts/prereq.${{ matrix.native }}.sh; fi
+        run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
-        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         uses: actions/cache/restore@v4
         with:
           path: toolchain.tar.gz
-          key: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) }}
+          key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
           fail-on-cache-miss: true
       - name: Extract toolchain
-        if: ${{ hashFiles(format('scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         run: |
           tar xzf toolchain.tar.gz
           echo "$PWD/toolchain/bin" >> $GITHUB_PATH
@@ -133,7 +133,7 @@ jobs:
           path: native-build-configuration
       - name: Verify musl setup
         if: matrix.native == 'linux-x64' || matrix.native == 'linux-arm64'
-        run: ./scripts/verify_musl_setup.sh
+        run: ./.github/scripts/verify_musl_setup.sh
         shell: bash {0}
       - name: Add graalVM configuration to server
         run: |
