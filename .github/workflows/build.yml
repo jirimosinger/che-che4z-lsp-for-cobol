@@ -81,6 +81,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: graalvm/setup-graalvm@v1
+        if: matrix.native == 'linux-x64' || matrix.native == 'linux-arm64'
+        with:
+          version: '22.3.0'
+          java-version: '11'
+          components: 'native-image'
+          native-image-musl: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ## uncomment me if you need native image job reports
+          # native-image-job-reports: 'true'
+          cache: 'maven'
+      - uses: graalvm/setup-graalvm@v1
+        if: matrix.native != 'linux-x64' && matrix.native != 'linux-arm64'
         with:
           version: '22.3.0'
           java-version: '11'
@@ -94,6 +106,10 @@ jobs:
         with:
           name: native-build-configuration
           path: native-build-configuration
+      - name: Verify musl setup
+        if: matrix.native == 'linux-x64' || matrix.native == 'linux-arm64'
+        run: ./.github/scripts/verify_musl_setup.sh
+        shell: bash {0}
       - name: Add graalVM configuration to server
         run: |
           cp -rp native-build-configuration/session-* server/engine/src/main/resources/META-INF/native-image/
