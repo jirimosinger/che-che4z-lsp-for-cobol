@@ -119,7 +119,7 @@ jobs:
         shell: bash
       - name: Build with Maven
         working-directory: server
-        run: mvn -e -B -P${{ maven_profile_prefix }}native -DskipTests clean package
+        run: mvn -e -B -P${{ matrix.maven_profile_prefix }}native -DskipTests clean package
       - name: Rename to cobol-ls
         if: matrix.os == 'windows-2022'
         shell: bash
