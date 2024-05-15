@@ -35,7 +35,7 @@ on:
 jobs:
   generateNativeConfig:
     runs-on: ubuntu-22.04
-    container: alpine:3.19
+    # container: alpine:3.19
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
@@ -60,7 +60,7 @@ jobs:
   aarch64-linux-musl:
     name: Build Linux ARM64 toolchain
     runs-on: ubuntu-22.04
-    container: alpine:3.19
+    # container: alpine:3.19
     steps:
       - uses: actions/checkout@v4
       - name: Install TAR
@@ -86,7 +86,7 @@ jobs:
             native-image-musl: 'true'
           - os: ubuntu-22.04
             native: linux-arm64
-            container: alpine:3.19
+            # container: alpine:3.19
             maven_profile_prefix: linux-arm64-
           - os: windows-2022
             native: win32-x64
@@ -99,13 +99,13 @@ jobs:
             native: darwin-x64
           - os: macos-14
             native: darwin-arm64
-    container: ${{ matrix.container }}
+    # container: ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
       - uses: actions/checkout@v4
-      - name: Requirements install
-        run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
+      # - name: Requirements install
+      #   run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
         if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         # if: matrix.native == 'linux-arm64'
