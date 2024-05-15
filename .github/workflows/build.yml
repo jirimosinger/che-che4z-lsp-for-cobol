@@ -100,7 +100,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Requirements install
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
