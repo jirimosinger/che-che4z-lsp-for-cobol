@@ -35,6 +35,7 @@ on:
 jobs:
   generateNativeConfig:
     runs-on: ubuntu-22.04
+    container: alpine:3.19
     steps:
       - uses: actions/checkout@v4
       - uses: graalvm/setup-graalvm@v1
@@ -103,9 +104,6 @@ jobs:
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
       - uses: actions/checkout@v4
-      # - name: Install TAR
-      #   run: apk add tar
-
       - name: Requirements install
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
