@@ -85,6 +85,7 @@ jobs:
             native-image-musl: 'true'
           - os: ubuntu-22.04
             native: linux-arm64
+            container: alpine:3.19
             maven_profile_prefix: linux-arm64-
           - os: windows-2022
             native: win32-x64
@@ -97,13 +98,14 @@ jobs:
             native: darwin-x64
           - os: macos-14
             native: darwin-arm64
+    container: ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
       - uses: actions/checkout@v4
-      - name: Install TAR
-        run: apk add tar
-        
+      # - name: Install TAR
+      #   run: apk add tar
+
       - name: Requirements install
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
