@@ -103,14 +103,16 @@ jobs:
       - name: Requirements install
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
-        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        if: ${{matrix.native}} == 'linux-arm64'
         uses: actions/cache/restore@v4
         with:
           path: toolchain.tar.gz
           key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
           fail-on-cache-miss: true
       - name: Extract toolchain
-        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        if: ${{matrix.native}} == 'linux-arm64'
         run: |
           tar xzf toolchain.tar.gz
           echo "$PWD/toolchain/bin" >> $GITHUB_PATH
