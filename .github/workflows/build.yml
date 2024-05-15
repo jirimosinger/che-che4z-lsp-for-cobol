@@ -108,7 +108,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: toolchain.tar.gz
-          key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
+          key: ${{ hashFiles('.github/scripts/toolchain.linux-arm64.sh') }}
+          # key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
           fail-on-cache-miss: true
       - name: Extract toolchain
         # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
