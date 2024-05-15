@@ -104,7 +104,7 @@ jobs:
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
         # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        if: ${{matrix.native}} == 'linux-arm64'
+        if: matrix.native == 'linux-arm64'
         uses: actions/cache/restore@v4
         with:
           path: toolchain.tar.gz
@@ -113,7 +113,7 @@ jobs:
           fail-on-cache-miss: true
       - name: Extract toolchain
         # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        if: ${{matrix.native}} == 'linux-arm64'
+        if: matrix.native == 'linux-arm64'
         run: |
           tar xzf toolchain.tar.gz
           echo "$PWD/toolchain/bin" >> $GITHUB_PATH
