@@ -100,11 +100,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
+      - uses: actions/checkout@v3
+
       - name: Requirements install
         run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
       - name: Download toolchain
-        # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        if: matrix.native == 'linux-arm64'
+        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        # if: matrix.native == 'linux-arm64'
         uses: actions/cache/restore@v4
         with:
           path: toolchain.tar.gz
@@ -112,13 +114,12 @@ jobs:
           # key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
           fail-on-cache-miss: true
       - name: Extract toolchain
-        # if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        if: matrix.native == 'linux-arm64'
+        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+        # if: matrix.native == 'linux-arm64'
         run: |
           tar xzf toolchain.tar.gz
           echo "$PWD/toolchain/bin" >> $GITHUB_PATH
 
-      - uses: actions/checkout@v3
       - uses: graalvm/setup-graalvm@v1
         with:
           version: '22.3.0'
