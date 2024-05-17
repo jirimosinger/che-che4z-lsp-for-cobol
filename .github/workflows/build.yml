@@ -132,7 +132,9 @@ jobs:
         if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         # if: matrix.native == 'linux-arm64'
         run: |
-          echo "$PWD/arm64-toolchain/bin" >> $GITHUB_PATH
+          tar xzf arm64-toolchain/toolchain.tar.gz
+          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
+          ls "$PWD/toolchain/bin"
 
       - uses: graalvm/setup-graalvm@v1
         with:
