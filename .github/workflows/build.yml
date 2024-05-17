@@ -133,9 +133,10 @@ jobs:
         # if: matrix.native == 'linux-arm64'
         run: |
           tar xzf arm64-toolchain/toolchain.tar.gz
-          echo "$PWD/toolchain/bin" >> $GITHUB_PATH
-          echo $PWD
-          ls "$PWD/toolchain/bin"
+          mv toolchain server/engine/toolchain
+          echo "$PWD/server/engine/toolchain/bin" >> $GITHUB_PATH
+          echo $PWD/server/engine
+          ls "$PWD/server/engine/toolchain/bin"
 
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -162,10 +163,8 @@ jobs:
           rm server/engine/src/main/resources/META-INF/native-image/session-*/jni-config.json
         shell: bash
       - name: Build with Maven
+        working-directory: server
         run: |
-          echo $PWD
-          ls "$PWD/toolchain/bin"
-          cd server
           mvn -e -B -P${{ matrix.maven_profile_prefix }}native -DskipTests clean package
       - name: Rename to cobol-ls
         if: matrix.os == 'windows-2022'
