@@ -75,6 +75,21 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: ./.github/scripts/toolchain.linux-arm64.sh
 
+      - name: Restore toolchain
+        if: steps.cache.outputs.cache-hit == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: toolchain.tar.gz
+          key: ${{ hashFiles('.github/scripts/toolchain.linux-arm64.sh') }}
+          fail-on-cache-miss: true
+      - name: Upload arm64 toolchain
+        if: steps.cache.outputs.cache-hit == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: arm64-toolchain
+          path: toolchain.tar.gz
+
   buildNative:
     strategy:
       fail-fast: false
@@ -109,12 +124,10 @@ jobs:
       - name: Download toolchain
         if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         # if: matrix.native == 'linux-arm64'
-        uses: actions/cache/restore@v4
+        uses: actions/download-artifact@v4
         with:
-          path: toolchain.tar.gz
-          key: ${{ hashFiles('.github/scripts/toolchain.linux-arm64.sh') }}
-          # key: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) }}
-          fail-on-cache-miss: true
+          name: arm64-toolchain
+          path: arm64-toolchain
       - name: Extract toolchain
         if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
         # if: matrix.native == 'linux-arm64'
