@@ -60,7 +60,7 @@ jobs:
   aarch64-linux-musl:
     name: Build Linux ARM64 toolchain
     runs-on: ubuntu-22.04
-    # container: alpine:3.19
+    container: alpine:3.19
     steps:
       - uses: actions/checkout@v4
       - name: Install TAR
