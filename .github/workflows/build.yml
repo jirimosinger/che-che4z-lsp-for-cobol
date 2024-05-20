@@ -99,10 +99,11 @@ jobs:
             native: linux-x64
             maven_profile_prefix: linux-
             native-image-musl: 'true'
-          - os: ubuntu-22.04
+          - os: macos-14
             native: linux-arm64
-            # container: alpine:3.19
-            maven_profile_prefix: linux-arm64-
+            container: ubuntu-22.04
+            # maven_profile_prefix: linux-arm64-
+              maven_profile_prefix: linux-
           - os: windows-2022
             native: win32-x64
             artifacts-ext: .exe
@@ -114,29 +115,29 @@ jobs:
             native: darwin-x64
           - os: macos-14
             native: darwin-arm64
-    # container: ${{ matrix.container }}
+    container: ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
     needs: [generateNativeConfig, aarch64-linux-musl]
     steps:
       - uses: actions/checkout@v4
       # - name: Requirements install
       #   run: if [ -f ./.github/scripts/prereq.${{ matrix.native }}.sh ]; then ./.github/scripts/prereq.${{ matrix.native }}.sh; fi
-      - name: Download toolchain
-        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        # if: matrix.native == 'linux-arm64'
-        uses: actions/download-artifact@v4
-        with:
-          name: arm64-toolchain
-          path: arm64-toolchain
-      - name: Add toolchain to path
-        if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
-        # if: matrix.native == 'linux-arm64'
-        run: |
-          tar xzf arm64-toolchain/toolchain.tar.gz
-          mv toolchain server/engine/toolchain
-          echo "$PWD/server/engine/toolchain/bin" >> $GITHUB_PATH
-          echo $PWD/server/engine
-          ls "$PWD/server/engine/toolchain/bin"
+      # - name: Download toolchain
+      #   if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+      #   # if: matrix.native == 'linux-arm64'
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: arm64-toolchain
+      #     path: arm64-toolchain
+      # - name: Add toolchain to path
+      #   if: ${{ hashFiles(format('.github/scripts/toolchain.{0}.sh', matrix.native)) != '' }}
+      #   # if: matrix.native == 'linux-arm64'
+      #   run: |
+      #     tar xzf arm64-toolchain/toolchain.tar.gz
+      #     mv toolchain server/engine/toolchain
+      #     echo "$PWD/server/engine/toolchain/bin" >> $GITHUB_PATH
+      #     echo $PWD/server/engine
+      #     ls "$PWD/server/engine/toolchain/bin"
 
       - uses: graalvm/setup-graalvm@v1
         with:
