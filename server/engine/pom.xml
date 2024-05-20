@@ -585,6 +585,8 @@
                             <mainClass>org.eclipse.lsp.cobol.LangServerBootstrap</mainClass>
                             <buildArgs>
                                 <buildArg>--native-compiler-path=toolchain${file.separator}bin${file.separator}aarch64-linux-musl-gcc</buildArg>
+                                <buildArg>--libc=musl</buildArg>
+                                <buildArg>--target=linux-aarch64</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
                                 <buildArg>--allow-incomplete-classpath</buildArg>
                                 <buildArg>--report-unsupported-elements-at-runtime</buildArg>
