@@ -103,7 +103,7 @@ jobs:
             native: linux-arm64
             container: ubuntu-22.04
             # maven_profile_prefix: linux-arm64-
-              maven_profile_prefix: linux-
+            maven_profile_prefix: linux-
           - os: windows-2022
             native: win32-x64
             artifacts-ext: .exe
