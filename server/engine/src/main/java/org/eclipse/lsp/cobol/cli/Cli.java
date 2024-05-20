@@ -80,7 +80,7 @@ public class Cli implements Callable<Integer> {
 
   @CommandLine.Option(
       names = {"-ce", "--copybook-extension"},
-      description = "List of copybook paths.")
+      description = "List of copybook file extensions.")
   private String[] cpyExt = {"", ".cpy"};
 
   /**

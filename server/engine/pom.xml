@@ -563,6 +563,47 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>linux-arm64-native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.9.13</version>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>org.eclipse.lsp.cobol.LangServerBootstrap</mainClass>
+                            <buildArgs>
+                                <buildArg>--native-compiler-path=toolchain${file.separator}bin${file.separator}aarch64-linux-musl-gcc</buildArg>
+                                <buildArg>--libc=musl</buildArg>
+                                <buildArg>--target=linux-aarch64</buildArg>
+                                <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                                <buildArg>--allow-incomplete-classpath</buildArg>
+                                <buildArg>--report-unsupported-elements-at-runtime</buildArg>
+                                <buildArg>--verbose</buildArg>
+                                <buildArg>--no-fallback</buildArg>
+                            </buildArgs>
+                            <agent>
+                                <options>
+                                    <option>access-filter-file=${basedir}/src/test/resources/access-filter.json</option>
+                                    <option>experimental-class-loader-support</option>
+                                </options>
+                            </agent>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <reporting>
